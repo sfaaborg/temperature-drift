@@ -4,15 +4,34 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Painted Near You</title>
-  <link rel="stylesheet" href="style.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background-color: #0e0e0e; color: #e8e8e8; font-family: 'Georgia', serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    #container { max-width: 700px; width: 90%; padding: 60px 0; display: flex; flex-direction: column; align-items: center; gap: 24px; text-align: center; }
+    h1 { font-size: 2rem; font-weight: normal; letter-spacing: 0.1em; }
+    #subtitle { font-size: 0.95rem; color: #888; line-height: 1.7; max-width: 500px; }
+    input { width: 100%; padding: 14px 18px; background: #1a1a1a; border: 1px solid #333; color: #e8e8e8; font-family: 'Georgia', serif; font-size: 1rem; outline: none; }
+    input:focus { border-color: #666; }
+    button { padding: 12px 32px; background: transparent; border: 1px solid #555; color: #e8e8e8; font-family: 'Georgia', serif; font-size: 0.9rem; letter-spacing: 0.08em; cursor: pointer; transition: border-color 0.2s, color 0.2s; }
+    button:hover { border-color: #aaa; color: #fff; }
+    #loading { color: #666; font-size: 0.9rem; font-style: italic; }
+    #error { color: #a05050; font-size: 0.9rem; }
+    #location-display { font-size: 0.85rem; color: #666; font-style: italic; }
+    #painting-container { display: flex; flex-direction: column; align-items: center; gap: 14px; margin-top: 8px; }
+    #painting-img { max-width: 100%; max-height: 540px; object-fit: contain; }
+    #painting-title { font-size: 1.1rem; letter-spacing: 0.05em; }
+    #painting-artist { font-size: 0.85rem; color: #777; }
+    #painting-date { font-size: 0.8rem; color: #555; }
+    #painting-caption { font-size: 0.85rem; color: #666; font-style: italic; max-width: 460px; line-height: 1.7; margin-top: 4px; }
+  </style>
 </head>
 <body>
   <div id="container">
     <h1>Painted Near You</h1>
-    <p id="subtitle">Enter your address. Find a painting of something close to where you are.</p>
+    <p id="subtitle">Enter your address. See how artists once saw where you are.</p>
 
     <input type="text" id="address" placeholder="Enter your address or city" />
-    <button onclick="run()">Find my painting</button>
+    <button id="btn">Find my painting</button>
 
     <div id="loading" style="display:none">Looking up your location...</div>
     <div id="error" style="display:none"></div>
@@ -27,3 +46,21 @@
         <div id="painting-caption"></div>
       </div>
     </div>
+  </div>
+
+  <script>
+    document.getElementById('btn').addEventListener('click', run);
+
+    async function geocode(address) {
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1&addressdetails=1`;
+      const res = await fetch(url, {
+        headers: { 'Accept-Language': 'en', 'User-Agent': 'painted-near-you' }
+      });
+      const data = await res.json();
+      if (!data || data.length === 0) throw new Error("Address not found. Try a city name instead.");
+      const addr = data[0].address;
+      return {
+        lat: parseFloat(data[0].lat),
+        lon: parseFloat(data[0].lon),
+        neighborhood: addr.neighbourhood || addr.suburb || null,
+        city: addr.city ||
