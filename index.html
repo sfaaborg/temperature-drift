@@ -209,7 +209,21 @@
       { word: "dangerous",    query: "dramatic shadow figure candlelight" },
       { word: "suffocated",   query: "figure nightmare pressing weight" },
       { word: "electric",     query: "fire sky dramatic clouds light" },
-      { word: "small",        query: "vast landscape tiny figure" }
+      { word: "small",        query: "vast landscape tiny figure" },
+      { word: "sad",          query: "mourning figure weeping sorrow" },
+      { word: "happy",        query: "dance figures color joy celebration" },
+      { word: "angry",        query: "battle violence struggle figures" },
+      { word: "scared",       query: "darkness shadow figure fear" },
+      { word: "tired",        query: "sleeping worker resting figure" },
+      { word: "confused",     query: "figures crowd chaos street" },
+      { word: "peaceful",     query: "quiet interior woman reading light" },
+      { word: "bored",        query: "figure alone empty room window" },
+      { word: "excited",      query: "dance figures color joy" },
+      { word: "heartbroken",  query: "mourning lamentation figure alone" },
+      { word: "overwhelmed",  query: "storm turbulent sea waves figures" },
+      { word: "empty",        query: "empty room grey light window" },
+      { word: "free",         query: "vast landscape sky figure open" },
+      { word: "stuck",        query: "figure alone interior dark shadow" }
     ];
 
     const seen = new Set();
@@ -250,19 +264,23 @@
     }
 
     async function getMoodEntryForAnyWord(word) {
+      // check curated list first
       const match = UNIQUE_MOODS.find(m => m.word.toLowerCase() === word.toLowerCase());
       if (match) return match;
 
+      // try datamuse for related words
       try {
         const res = await fetch(`https://api.datamuse.com/words?ml=${encodeURIComponent(word)}&max=8`);
         const related = await res.json();
         if (related && related.length > 0) {
-          const words = related.map(r => r.word).slice(0, 5).join(' ');
+          const words = [word, ...related.map(r => r.word).slice(0, 4)].join(' ');
           return { word, query: words };
         }
       } catch (e) {
-        // fall through to using the word directly
+        // fall through
       }
+
+      // last resort: use the word itself
       return { word, query: word };
     }
 
@@ -283,8 +301,22 @@
     async function showPainting(moods) {
       const combinedQuery = moods.map(m => m.query).join(' ');
       let painting = await searchMetForPainting(combinedQuery);
-      if (!painting) painting = await searchMetForPainting(moods[0].query);
-      if (!painting) throw new Error("Couldn't find a painting. Try different words.");
+
+      // fallback: try each mood's query individually
+      if (!painting) {
+        for (const mood of moods) {
+          painting = await searchMetForPainting(mood.query);
+          if (painting) break;
+        }
+      }
+
+      // last resort: search just the mood words themselves
+      if (!painting) {
+        const wordQuery = moods.map(m => m.word).join(' ');
+        painting = await searchMetForPainting(wordQuery);
+      }
+
+      if (!painting) throw new Error("Couldn't find a painting. Try a different word.");
 
       const moodStr = moods.map(m => m.word).join(' and ');
       const artist = painting.artistDisplayName || 'An unknown artist';
