@@ -1,4 +1,176 @@
-const ALL_MOODS = [
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Someone Painted This Before</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: #0e0e0e;
+      color: #e8e8e8;
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    #container {
+      max-width: 660px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 36px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2.6rem;
+      font-weight: 300;
+      letter-spacing: 0.12em;
+      color: #e8e8e8;
+    }
+
+    #subtitle {
+      font-size: 1.15rem;
+      color: #777;
+      line-height: 1.9;
+      font-style: italic;
+    }
+
+    #mood-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .mood-btn {
+      padding: 10px 26px;
+      background: transparent;
+      border: 1px solid #333;
+      color: #999;
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 1.15rem;
+      font-style: italic;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .mood-btn:hover { border-color: #777; color: #e8e8e8; }
+
+    .mood-btn.selected {
+      border-color: #aaa;
+      color: #ffffff;
+      background: #1a1a1a;
+    }
+
+    input {
+      width: 100%;
+      max-width: 400px;
+      padding: 10px 0;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid #333;
+      color: #e8e8e8;
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 1.15rem;
+      font-style: italic;
+      outline: none;
+      text-align: center;
+    }
+
+    input::placeholder { color: #444; }
+    input:focus { border-bottom-color: #777; }
+
+    #find-btn {
+      padding: 12px 36px;
+      background: transparent;
+      border: 1px solid #555;
+      color: #e8e8e8;
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 1.1rem;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    #find-btn:hover { border-color: #aaa; }
+
+    #loading { color: #555; font-size: 1.05rem; font-style: italic; }
+    #error { color: #a05050; font-size: 1rem; font-style: italic; }
+
+    #result {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      width: 100%;
+    }
+
+    #mood-display { font-size: 0.95rem; color: #555; font-style: italic; letter-spacing: 0.06em; }
+
+    #painting-img { max-width: 100%; max-height: 540px; object-fit: contain; }
+
+    #painting-title { font-size: 1.4rem; color: #e8e8e8; letter-spacing: 0.04em; }
+    #painting-artist { font-size: 1rem; color: #666; }
+    #painting-date { font-size: 0.85rem; color: #444; }
+
+    #painting-caption {
+      font-size: 1rem;
+      color: #666;
+      font-style: italic;
+      max-width: 440px;
+      line-height: 1.9;
+    }
+
+    #try-again {
+      padding: 10px 26px;
+      background: transparent;
+      border: 1px solid #333;
+      color: #777;
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 1rem;
+      font-style: italic;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    #try-again:hover { border-color: #777; color: #e8e8e8; }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <h1>Someone Painted This Before</h1>
+    <p id="subtitle">Choose how you're feeling. Find the painting that holds it.</p>
+
+    <div id="mood-grid"></div>
+
+    <input type="text" id="custom-mood" placeholder="or type your own word" />
+    <button id="find-btn">Find my painting</button>
+
+    <div id="loading" style="display:none">Looking...</div>
+    <div id="error" style="display:none"></div>
+
+    <div id="result" style="display:none">
+      <div id="mood-display"></div>
+      <img id="painting-img" src="" alt="" />
+      <div id="painting-title"></div>
+      <div id="painting-artist"></div>
+      <div id="painting-date"></div>
+      <div id="painting-caption"></div>
+      <button id="try-again">find another</button>
+    </div>
+  </div>
+
+  <script>
+    const ALL_MOODS = [
       { word: "melancholy",   query: "solitude figure window interior" },
       { word: "restless",     query: "storm turbulent sea waves" },
       { word: "tender",       query: "mother child embrace" },
@@ -77,7 +249,6 @@ const ALL_MOODS = [
       });
     }
 
-    // NEW: any word -> related words via Datamuse -> search query
     async function getMoodEntryForAnyWord(word) {
       const match = UNIQUE_MOODS.find(m => m.word.toLowerCase() === word.toLowerCase());
       if (match) return match;
@@ -183,3 +354,6 @@ const ALL_MOODS = [
     document.getElementById('try-again').addEventListener('click', tryAgain);
 
     buildMoodGrid();
+  </script>
+</body>
+</html>
